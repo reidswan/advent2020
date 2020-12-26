@@ -1,5 +1,6 @@
 use common::load_vec;
 use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::str::FromStr;
 
 fn main() {
@@ -57,16 +58,18 @@ impl FromStr for TreeLine {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.trim();
-        let length = s.len();
-        let mut tree_locations = HashSet::new();
-        for (index, ch) in s.char_indices() {
-            if ch == '#' {
-                tree_locations.insert(index);
-            } else if ch != '.' {
-                return Err(format!("Expected only '#' and '.' but found '{}'", ch));
-            }
+        if s.chars().any(|ch| ch != '#' && ch != '.') {
+            return Err("Line contains characters other than '#' and '.'".into());
         }
 
+        let length = s.len();
+        let tree_locations = HashSet::from_iter(s.char_indices().filter_map(|(index, ch)| {
+            if ch == '#' {
+                Some(index)
+            } else {
+                None
+            }
+        }));
         Ok(TreeLine {
             tree_locations,
             length,
