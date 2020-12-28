@@ -15,7 +15,7 @@ fn part1(groups: &[String]) {
             HashSet::<char>::from_iter(group.chars().filter(|&c| 'a' <= c && c <= 'z')).len()
         })
         .sum();
-    println!("Day 1: {}", total)
+    println!("Part 1: {}", total)
 }
 
 fn part2(groups: &[String]) {

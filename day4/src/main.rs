@@ -22,7 +22,6 @@ lazy_static! {
 }
 
 fn main() {
-    // let raw_input = load_raw_text("input/day4.txt");
     let passports: Vec<_> = load_groups("input/day4.txt");
 
     part1(&passports);

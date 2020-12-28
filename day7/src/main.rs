@@ -59,7 +59,6 @@ fn get_total_contained<'a>(
         Some(contained) if !contained.is_empty() => contained
             .iter()
             .map(|(count, col)| {
-                println!("{} * {}", count, col);
                 count * get_total_contained(col, container_map, total_contained_store)
             })
             .sum(),
@@ -67,8 +66,6 @@ fn get_total_contained<'a>(
     } + 1; // + 1 for the current bag
 
     total_contained_store.insert(color, total);
-
-    println!("Got {} {}", total, color);
     total
 }
 
