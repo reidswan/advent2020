@@ -1,6 +1,5 @@
 use common::load_vec;
 use std::collections::HashSet;
-use std::iter::FromIterator;
 
 fn main() {
     let input: Vec<usize> = load_vec("input/day5.txt")

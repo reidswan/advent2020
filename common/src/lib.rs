@@ -2,6 +2,25 @@ use std::iter::Peekable;
 use std::str::Chars;
 use std::str::FromStr;
 
+pub fn load_groups<T, E>(file_name: &str) -> Vec<T>
+where
+    T: FromStr<Err = E>,
+    E: std::fmt::Debug,
+{
+    let raw_input = load_raw_text(file_name);
+    raw_input
+        .split("\n\n")
+        .filter_map(|i| {
+            let trimmed = i.trim();
+            if !trimmed.is_empty() {
+                Some(T::from_str(trimmed).unwrap())
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
 pub fn load_vec<T, E>(file_name: &str) -> Vec<T>
 where
     T: FromStr<Err = E>,

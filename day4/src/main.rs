@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-use common::load_raw_text;
+use common::load_groups;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::iter::FromIterator;
@@ -22,14 +22,14 @@ lazy_static! {
 }
 
 fn main() {
-    let raw_input = load_raw_text("input/day4.txt");
-    let passports: Vec<_> = raw_input.split("\n\n").collect();
+    // let raw_input = load_raw_text("input/day4.txt");
+    let passports: Vec<_> = load_groups("input/day4.txt");
 
     part1(&passports);
     part2(&passports);
 }
 
-fn part1(passports: &[&str]) {
+fn part1(passports: &[String]) {
     let part1 = passports
         .iter()
         .filter(|passport| check_passport(passport))
@@ -38,7 +38,7 @@ fn part1(passports: &[&str]) {
     println!("Part 1: {}", part1);
 }
 
-fn part2(passports: &[&str]) {
+fn part2(passports: &[String]) {
     let part2 = passports
         .iter()
         .map(|p| Passport::from_string(p))
