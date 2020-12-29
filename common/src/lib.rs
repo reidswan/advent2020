@@ -40,6 +40,16 @@ where
         .collect()
 }
 
+pub fn load_single_object<T, E>(file_name: &str) -> T
+where
+    T: FromStr<Err = E>,
+    E: std::fmt::Debug,
+{
+    let raw = load_raw_text(file_name);
+
+    T::from_str(raw.trim()).unwrap()
+}
+
 pub fn load_raw_text(file_name: &str) -> String {
     std::fs::read_to_string(file_name).unwrap()
 }
