@@ -69,3 +69,10 @@ where
     }
     T::from_str(&min_s).map_err(|e| format!("{:?} ({})", e, min_s))
 }
+
+pub fn modulo<T>(a: T, b: T) -> T
+where
+    T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy,
+{
+    ((a % b) + b) % b
+}
