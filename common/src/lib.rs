@@ -1,4 +1,5 @@
 use std::iter::Peekable;
+use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::Chars;
 use std::str::FromStr;
 
@@ -70,9 +71,114 @@ where
     T::from_str(&min_s).map_err(|e| format!("{:?} ({})", e, min_s))
 }
 
+macro_rules! trait_alias {
+    ($name:ident: $($trait_name:path)|*) => {
+        pub trait $name: $( $trait_name + )* {}
+        impl <T> $name for T where T: $( $trait_name +)* {}
+    };
+}
+
+macro_rules! swap {
+    (($a:ident, $b:ident) = ($c:expr, $d:expr)) => {{
+        let temp1 = $c;
+        let temp2 = $d;
+        $a = temp1;
+        $b = temp2;
+    }};
+}
+
+trait_alias!(
+    Number:
+        Copy | Rem<Output = Self> | Ord | From<u8> | PartialEq |
+        Add<Output = Self> | Div<Output = Self> | Mul<Output=Self> | Sub<Output=Self>
+);
+
 pub fn modulo<T>(a: T, b: T) -> T
 where
-    T: std::ops::Rem<Output = T> + std::ops::Add<Output = T> + Copy,
+    T: Number,
 {
     ((a % b) + b) % b
+}
+
+pub fn gcd<T>(mut a: T, mut b: T) -> T
+where
+    T: Number,
+{
+    let zero = T::from(0);
+
+    while b != zero {
+        let temp = b;
+        b = a % b;
+        a = temp;
+    }
+
+    a
+}
+
+pub fn extended_gcd<T>(a: T, b: T) -> (T, T, T)
+where
+    T: Number,
+{
+    let (mut old_r, mut r) = (a, b);
+    let (mut old_s, mut s) = (T::from(1), T::from(0));
+    let (mut old_t, mut t) = (T::from(0), T::from(1));
+
+    let zero = T::from(0);
+    while r != zero {
+        let quotient = old_r / r;
+        swap!((old_r, r) = (r, old_r - quotient * r));
+        swap!((old_s, s) = (s, old_s - quotient * s));
+        swap!((old_t, t) = (t, old_t - quotient * t));
+    }
+
+    (old_r, old_s, old_t)
+}
+
+pub fn is_coprime<T>(a: T, b: T) -> bool
+where
+    T: Number,
+{
+    gcd(a, b) == T::from(1)
+}
+
+pub fn is_coprimes<T>(numbers: &[T]) -> bool
+where
+    T: Number,
+{
+    for i in 0..numbers.len() - 1 {
+        for j in i + 1..numbers.len() {
+            if !is_coprime(numbers[i], numbers[j]) {
+                return false;
+            }
+        }
+    }
+    true
+}
+
+pub fn mod_inverse<T>(a: T, m: T) -> T
+where
+    T: Number,
+{
+    let (_, x, _) = extended_gcd(a, m);
+    ((x % m) + m) % m
+}
+
+pub fn chinese_remainder<T>(numbers: &[(T, T)]) -> T
+where
+    T: Number,
+{
+    let zero = T::from(0);
+    let one = T::from(1);
+    let mod_product = numbers.iter().map(|(_, m)| *m).fold(one, |acc, i| acc * i);
+    modulo(
+        numbers
+            .iter()
+            .map(|&(a, m)| {
+                let b = mod_product / m;
+                let b_inverse = mod_inverse(b, m);
+                modulo(a * b * b_inverse, mod_product)
+            })
+            .fold(zero, |acc, i| acc + i),
+        mod_product,
+    )
 }
