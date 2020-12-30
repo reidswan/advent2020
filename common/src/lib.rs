@@ -78,6 +78,7 @@ macro_rules! trait_alias {
     };
 }
 
+#[macro_export]
 macro_rules! swap {
     (($a:ident, $b:ident) = ($c:expr, $d:expr)) => {{
         let temp1 = $c;
@@ -107,9 +108,7 @@ where
     let zero = T::from(0);
 
     while b != zero {
-        let temp = b;
-        b = a % b;
-        a = temp;
+        swap!((a, b) = (b, a % b));
     }
 
     a
