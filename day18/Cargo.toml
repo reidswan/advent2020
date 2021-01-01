@@ -1,5 +1,5 @@
 [package]
-name = "day17"
+name = "day18"
 version = "0.1.0"
 authors = ["Reid Swan <reidswan@outlook.com>"]
 edition = "2018"
@@ -8,5 +8,4 @@ edition = "2018"
 
 [dependencies]
 common = { path = "../common" }
-num_cpus = "^1"
-threadpool = "^1.8"
+

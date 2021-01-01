@@ -1,22 +1,29 @@
 mod neighbors;
 use common::load_single_object;
 use neighbors::{NEIGHBOURS_3D, NEIGHBOURS_4D};
+use num_cpus;
 use std::cmp::{max, min};
 use std::collections::HashSet;
 use std::str::FromStr;
+use std::sync::mpsc::channel;
+use std::sync::Arc;
+use threadpool::ThreadPool;
 
 fn main() {
-    println!("Part 1: {}", run::<Coord3D>());
-    println!("Part 2: {}", run::<Coord4D>());
+    let thread_count = max(4, num_cpus::get() - 1);
+    let threadpool = ThreadPool::new(thread_count);
+
+    println!("Part 1: {}", run::<Coord3D>(&threadpool));
+    println!("Part 2: {}", run::<Coord4D>(&threadpool));
 }
 
-fn run<T>() -> usize
+fn run<T>(pool: &ThreadPool) -> usize
 where
-    T: Coord + Eq + std::hash::Hash,
+    T: Coord + Eq + std::hash::Hash + Send + Sync + 'static,
 {
     let mut input: GameOfLife<T> = load_single_object("input/day17.txt");
     for _ in 0..6 {
-        input.step();
+        input = input.step(&pool);
     }
 
     input.active_cubes.len()
@@ -189,46 +196,55 @@ where
 
 impl<T> GameOfLife<T>
 where
-    T: Coord + Eq + std::hash::Hash,
+    T: Coord + Eq + std::hash::Hash + 'static + Send + Sync,
 {
-    fn count_active_neighbours(&self, coord: T) -> usize {
+    fn count_active_neighbours(active_cubes: &HashSet<T>, coord: T) -> usize {
         coord
             .get_neighbours()
             .iter()
-            .filter(|neighbour| self.active_cubes.contains(&coord.add(neighbour)))
+            .filter(|neighbour| active_cubes.contains(&coord.add(neighbour)))
             .count()
     }
 
-    fn update_state(&self, coord: T, target: &mut HashSet<T>) {
-        let active_neighbours = self.count_active_neighbours(coord);
-        let should_add = if self.active_cubes.contains(&coord) {
+    fn should_update_state(active_cubes: Arc<HashSet<T>>, coord: T) -> bool {
+        let active_neighbours = Self::count_active_neighbours(&active_cubes, coord);
+        if active_cubes.contains(&coord) {
             active_neighbours == 2 || active_neighbours == 3
         } else {
             active_neighbours == 3
-        };
-
-        if should_add {
-            target.insert(coord);
         }
     }
 
-    fn step(&mut self) {
-        let mut target = HashSet::new();
-        self.update_limits();
+    fn step(mut self, pool: &ThreadPool) -> Self {
+        let (lower, upper) = self.get_limits();
 
         // add to the limits to consider all values whose state may change
-        let upper = self.upper_limits.shift_all_by(2);
-        let lower = self.lower_limits.shift_all_by(-2);
-        T::for_each_in_limits(&lower, &upper, |coord| {
-            self.update_state(coord, &mut target);
-        });
-        self.active_cubes = target;
+        let upper = upper.shift_all_by(2);
+        let lower = lower.shift_all_by(-2);
+        let active_cubes = Arc::new(self.active_cubes);
+        let rx = {
+            let (tx, rx) = channel();
+            T::for_each_in_limits(&lower, &upper, |coord| {
+                let active_cubes = Arc::clone(&active_cubes);
+                let tx = tx.clone();
+                pool.execute(move || {
+                    if Self::should_update_state(active_cubes, coord) {
+                        tx.send(coord).unwrap();
+                    }
+                })
+            });
+            rx
+        };
+
+        GameOfLife {
+            active_cubes: rx.iter().collect(),
+            lower_limits: self.lower_limits,
+            upper_limits: self.upper_limits,
+        }
     }
 
-    fn update_limits(&mut self) {
-        let (lower, upper) = T::get_limits(&self.active_cubes).unwrap();
-        self.lower_limits = lower;
-        self.upper_limits = upper;
+    fn get_limits(&mut self) -> (T, T) {
+        T::get_limits(&self.active_cubes).unwrap()
     }
 }
 
