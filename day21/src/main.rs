@@ -94,7 +94,7 @@ fn allergen_ingred_map(food: &[Food]) -> HashMap<String, HashSet<String>> {
             if !map.contains_key(&allergen[..]) {
                 map.insert(allergen.clone(), food_item.ingredients.clone());
             } else {
-                let mut set = map.remove(&allergen[..]).unwrap();
+                let set = map.remove(&allergen[..]).unwrap();
                 map.insert(
                     allergen.clone(),
                     set.intersection(&food_item.ingredients)
