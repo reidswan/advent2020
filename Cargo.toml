@@ -21,7 +21,8 @@ members = [
     "day18",
     "day19",
     "day21",
-    "day22"
+    "day22",
+    "day23"
 ]
 
 exclude = [ "input" ]
