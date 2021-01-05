@@ -48,6 +48,9 @@ fn update_layout(src: &mut HashMap<Coord, TileColor>) {
 
     for x in min_edge.0..=max_edge.0 {
         for y in min_edge.1..=max_edge.1 {
+            if !Coord::is_valid_pair(x, y) {
+                continue;
+            };
             let coord = Coord(x, y);
             let color = *src.get(&coord).unwrap_or_default();
             let matching_neighbours = count_neighbours_with_color(src, coord, TileColor::Black);
@@ -130,7 +133,7 @@ impl Coord {
         Coord(min(self.0, other.0), min(self.1, other.1))
     }
 
-    fn is_valid_pair(x: usize, y: usize) -> bool {
+    fn is_valid_pair(x: isize, y: isize) -> bool {
         (x + y) % 2 == 0
     }
 }
